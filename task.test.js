@@ -14,7 +14,6 @@ beforeEach(() => {
 
 let tasksTxtCli = (...args) => [`${__dirname}/task`, ...args].join(" ");
 
-
 let usage = `Usage :-
 $ ./task add 2 hello world    # Add a new item with priority 2 and text "hello world" to the list
 $ ./task ls                   # Show incomplete priority list items sorted by priority in ascending order
@@ -39,7 +38,7 @@ test("add a single tasks", () => {
   let expected = 'Added task: "the thing i need to do" with priority 1';
   let received = execSync(
     tasksTxtCli("add", '1 "the thing i need to do"')
-  ).toString("utf8");
+  ).toString("");
 
   expect(received).toEqual(expect.stringContaining(expected));
 });

@@ -1,3 +1,4 @@
+const { Console } = require("console");
 const fs = require("fs");
 
 const args = process.argv;
@@ -11,20 +12,20 @@ if (fs.existsSync(currentWorkingDirectory + "todo.txt") === false) {
 
 if (fs.existsSync(currentWorkingDirectory + "done.txt") == false) {
   let createStream = fs.createWriteStream("done.txt");
+
   createStream.end();
 }
 
 const InfoFun = () => {
   const UsageText = `
-    Usage :-
-    $ ./todo.sh add "todo item" # Add a new todo
-    $ ./todo.sh ls              # show remaining todos
-    $ ./todo.sh del NUMBER      # Delete a todo
-    $ ./todo.sh done NUMBER      # Complete a todo
-    $ ./todo.sh help            # Show usage
-    $ ./todo.sh report          # Statistics
+Usage :-
+$ ./task add 2 hello world    # Add a new item with priority 2 and text "hello world" to the list
+$ ./task ls                   # Show incomplete priority list items sorted by priority in ascending order
+$ ./task del INDEX            # Delete the incomplete item with the given index
+$ ./task done INDEX           # Mark the incomplete item with the given index as complete
+$ ./task help                 # Show usage
+$ ./task report               # Statistics
     `;
-
   console.log(UsageText);
 };
 
@@ -34,17 +35,20 @@ const listFun = () => {
     .readFileSync(currentWorkingDirectory + "todo.txt")
     .toString();
   data = fileData.split("\n");
-  let filterData = data.filter((value) => value !== "");
-  if (filterData.length === 0) {
+  // let filterData = data.filter((value) => value !== "");
+  filterData = data;
+  if (filterData.length === 1) {
     console.log("There are no pending todos!");
   }
-  for (let i = 0; i < filterData.length; i++) {
-    console.log(filterData.length - i + ". " + filterData[i]);
+
+  for (let index = 1; index < filterData.length; index++) {
+    console.log(`${index}. ${filterData[index]}`);
   }
 };
 
 const addFun = () => {
-  const newTask = args[3];
+  const newTask = args[4];
+  const priority = args[3];
   if (newTask) {
     let data = [];
 
@@ -54,10 +58,10 @@ const addFun = () => {
 
     fs.writeFile(
       currentWorkingDirectory + "todo.txt",
-      newTask + "\n" + fileData,
+      fileData + "\n" + newTask + " " + "[" + priority + "]",
       function (err) {
         if (err) throw err;
-        console.log('Added todo: "' + newTask + '"');
+        console.log(`Added task: "${newTask}" with priority ${priority}`);
       }
     );
   } else {
@@ -73,16 +77,26 @@ const deleteFun = () => {
       .readFileSync(currentWorkingDirectory + "todo.txt")
       .toString();
     data = fileData.split("\n");
-    let filterData = data.filter(function (value) {
-      return value !== "";
-    });
+    // let filterData = data.filter(function (value) {
+    //   return value !== "";
+    // });
+    filterData = data;
     if (deleteIndex > filterData.length || deleteIndex <= 0) {
       console.log(
         "Error: todo #" + deleteIndex + " does not exist. Nothing deleted."
       );
     } else {
-      filterData.splice(filterData.length - deleteIndex, 1);
+      // console.log(filterData);
+
+      filterData = filterData.filter((item) => item != filterData[deleteIndex]);
+
+      // filterData = filterData.splice(filterData[deleteIndex], 1);
+
+      // filterData.splice(filterData[deleteIndex], 1);
+      // console.log(filterData);
+
       const newData = filterData.join("\n");
+
       fs.writeFile(
         currentWorkingDirectory + "todo.txt",
         newData,
@@ -110,14 +124,20 @@ const doneFun = () => {
       .readFileSync(currentWorkingDirectory + "done.txt")
       .toString();
     data = fileData.split("\n");
-    let filterData = data.filter(function (value) {
-      return value !== "";
-    });
+    // let filterData = data.filter(function (value) {
+    //   return value !== "";
+    // });
+    filterData = data;
     if (doneIndex > filterData.length || doneIndex <= 0) {
       console.log("Error: todo #" + doneIndex + " does not exist.");
     } else {
-      const deleted = filterData.splice(filterData.length - doneIndex, 1);
+      const deleted = filterData.filter(
+        (item) => item == filterData[doneIndex]
+      );
+      filterData = filterData.filter((item) => item != deleted);
+
       const newData = filterData.join("\n");
+
       fs.writeFile(
         currentWorkingDirectory + "todo.txt",
         newData,
@@ -127,7 +147,7 @@ const doneFun = () => {
       );
       fs.writeFile(
         currentWorkingDirectory + "done.txt",
-        dateString + " " + deleted + "\n" + doneData,
+        deleted + "\n" + doneData,
         function (err) {
           if (err) throw err;
           console.log("Marked todo #" + doneIndex + " as done.");
@@ -142,26 +162,24 @@ const doneFun = () => {
 const reportFun = () => {
   let todoData = [];
   let doneData = [];
-  let dateobj = new Date();
-  let dateString = dateobj.toISOString().substring(0, 10);
+
   const todo = fs.readFileSync(currentWorkingDirectory + "todo.txt").toString();
   const done = fs.readFileSync(currentWorkingDirectory + "done.txt").toString();
   todoData = todo.split("\n");
   doneData = done.split("\n");
-  let filterTodoData = todoData.filter(function (value) {
-    return value !== "";
-  });
-  let filterDoneData = doneData.filter(function (value) {
-    return value !== "";
-  });
-  console.log(
-    dateString +
-      " " +
-      "Pending : " +
-      filterTodoData.length +
-      " Completed : " +
-      filterDoneData.length
-  );
+
+  todoLength = todoData.filter((item) => item !== "");
+  doneLength = doneData.filter((item) => item !== "");
+
+  console.log("Pending : " + todoLength.length);
+  for (let i = 1; i < todoData.length; i++) {
+    console.log(`${i}. ${todoData[i]}`);
+  }
+
+  console.log("Completed : " + doneLength.length);
+  for (let i = 1; i < doneData.length; i++) {
+    console.log(`${i}. ${doneData[i]}`);
+  }
 };
 
 switch (args[2]) {
